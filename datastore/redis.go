@@ -2,8 +2,11 @@ package datastore
 
 import (
 	"crypto/tls"
+	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -23,6 +26,10 @@ var redisPasswordRequired = "true"
 
 // true or false
 var sslRequired = "true"
+
+const todoIDCounter = "todoid"
+const todoIDsSet = "todos_gentur-ids"
+const defaultTag = "active"
 
 func init() {
 	redisHost = os.Getenv(redisHostEnvVar)
@@ -66,10 +73,76 @@ func getClient() *redis.Client {
 	return c
 }
 
+func ListTodos(tags string) []Todo {
+	c := getClient()
+	defer c.Close()
+
+	todoHashNames, err := c.SMembers(todoIDsSet).Result()
+	if err != nil {
+		log.Fatal("failed to get todo IDs", err)
+	}
+
+	todos := []Todo{}
+	for _, todoHashName := range todoHashNames {
+		id := strings.Split(todoHashName, ":")[1]
+
+		todoMap, err := c.HGetAll(todoHashName).Result()
+		if err != nil {
+			log.Fatalf("failed to get todo from %s - %v\n", todoHashName, err)
+		}
+
+		var todo Todo
+		if tags == "" {
+			todo = Todo{id, todoMap["created"], todoMap["task_content"], todoMap["tags"]}
+			todos = append(todos, todo)
+		} else {
+			if tags == todoMap["tags"] {
+				todo = Todo{id, todoMap["created"], todoMap["task_content"], todoMap["tags"]}
+				todos = append(todos, todo)
+			}
+		}
+	}
+	if len(todos) == 0 {
+		fmt.Println("no todos founds")
+		return nil
+	}
+	return todos
+}
+
+func CreateTodo(taskContent string) {
+	c := getClient()
+	defer c.Close()
+
+	// set increment
+	id, err := c.Incr(todoIDCounter).Result()
+	if err != nil {
+		log.Fatal("failed to increment id!", err)
+	}
+	todoid := "todo:" + strconv.Itoa(int(id))
+
+	//store ID in a SET for other operations
+	err = c.SAdd(todoIDsSet, todoid).Err()
+	if err != nil {
+		log.Fatal("failed to add todo id to SET", err)
+	}
+
+	//save todo in a HASH
+	todo := map[string]interface{}{
+		"created":      time.Now().String(),
+		"task_content": taskContent,
+		"tags":         defaultTag,
+	}
+	err = c.HMSet(todoid, todo).Err()
+	if err != nil {
+		log.Fatal("failed to save todo")
+	}
+	fmt.Println("todo saved! use './todo list' to show")
+}
+
 // Todo holds todo information
 type Todo struct {
 	ID          string
-	Created     time.Time
+	Created     string
 	TaskContent string
 	Tags        string
 }
