@@ -6,11 +6,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{Use: "todo", Short: "Yet another TODO app. Uses Go and Redis", Version: "0.1.0"}
+var ContextCommand = &cobra.Command{}
+
+func init() {
+	ContextCommand = &cobra.Command{Use: "todo", Short: "Starting todo apps", Version: "0.0.1"}
+}
 
 // Execute is the entry point
 func Execute() {
-	err := rootCmd.Execute()
+	err := ContextCommand.Execute()
 	if err != nil {
 		log.Fatal("cannot start todo app - ", err)
 	}
