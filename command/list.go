@@ -8,14 +8,14 @@ import (
 	"os"
 )
 
-var listCommand = &cobra.Command{Use: "list", Short: "list all todos", Run: List}
+var listCommand = &cobra.Command{Use: "list", Short: "list all todos", Run: ListTodo}
 
 func init() {
 	listCommand.Flags().String("tags", "", "active, completed or deleted")
 	ContextCommand.AddCommand(listCommand)
 }
 
-func List(cmd *cobra.Command, args []string) {
+func ListTodo(cmd *cobra.Command, args []string) {
 	status := cmd.Flag("tags").Value.String()
 
 	var todos []datastore.Todo

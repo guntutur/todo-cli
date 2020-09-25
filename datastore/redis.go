@@ -113,20 +113,17 @@ func CreateTodo(taskContent string) {
 	c := getClient()
 	defer c.Close()
 
-	// set increment
 	id, err := c.Incr(todoIDCounter).Result()
 	if err != nil {
 		log.Fatal("failed to increment id!", err)
 	}
 	todoid := "todo:" + strconv.Itoa(int(id))
 
-	//store ID in a SET for other operations
 	err = c.SAdd(todoIDsSet, todoid).Err()
 	if err != nil {
 		log.Fatal("failed to add todo id to SET", err)
 	}
 
-	//save todo in a HASH
 	todo := map[string]interface{}{
 		"created":      time.Now().String(),
 		"task_content": taskContent,
@@ -139,7 +136,29 @@ func CreateTodo(taskContent string) {
 	fmt.Println("todo saved! use './todo list' to show")
 }
 
-// Todo holds todo information
+func CompleteTodo(id string) {
+	c := getClient()
+	defer c.Close()
+
+	exists, err := c.SIsMember(todoIDsSet, "todo:"+id).Result()
+	if err != nil {
+		log.Fatalf("todo does noot %s exists %v", id, err)
+	}
+
+	if !exists {
+		log.Fatalf("todo with id %s does not exist\n", id)
+	}
+	completedTodo := map[string]interface{}{}
+	completedTodo["tags"] = "completed"
+
+	err = c.HMSet("todo:"+id, completedTodo).Err()
+	if err != nil {
+		log.Fatal("failed to complete todo id", id)
+	}
+	fmt.Printf("todo id %s completed. use './todo list' to show\n", id)
+}
+
+// Todo struct type
 type Todo struct {
 	ID          string
 	Created     string
