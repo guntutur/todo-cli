@@ -80,6 +80,7 @@ using exec redis above, enter command `redis-cli`
 after prompt open, type in `ping` and then enter to see `pong` in the output
 
 verify that all data exists after basic cruds operation with `SCAN 0 COUNT 1000 MATCH todo*` in redis-cli console
+show individual record with `HGETALL todo:1`
 
 use below command to stop all running contaier
 ````
