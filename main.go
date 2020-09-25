@@ -1,7 +1,7 @@
 package main
 
-import "fmt"
+import "github.com/guntutur/todo-cli/command"
 
 func main() {
-	fmt.Println("Your Friendly todo apps")
+	command.Execute()
 }
