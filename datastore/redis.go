@@ -91,14 +91,16 @@ func ListTodos(tags string) []Todo {
 			log.Fatalf("failed to get todo from %s - %v\n", todoHashName, err)
 		}
 
-		var todo Todo
-		if tags == "" {
-			todo = Todo{id, todoMap["created"], todoMap["task_content"], todoMap["tags"]}
-			todos = append(todos, todo)
-		} else {
-			if tags == todoMap["tags"] {
+		if todoMap["tags"] != "deleted" {
+			var todo Todo
+			if tags == "" {
 				todo = Todo{id, todoMap["created"], todoMap["task_content"], todoMap["tags"]}
 				todos = append(todos, todo)
+			} else {
+				if tags == todoMap["tags"] {
+					todo = Todo{id, todoMap["created"], todoMap["task_content"], todoMap["tags"]}
+					todos = append(todos, todo)
+				}
 			}
 		}
 	}
@@ -142,7 +144,7 @@ func CompleteTodo(id string) {
 
 	exists, err := c.SIsMember(todoIDsSet, "todo:"+id).Result()
 	if err != nil {
-		log.Fatalf("todo does noot %s exists %v", id, err)
+		log.Fatalf("todo does not %s exists %v", id, err)
 	}
 
 	if !exists {
@@ -156,6 +158,28 @@ func CompleteTodo(id string) {
 		log.Fatal("failed to complete todo id", id)
 	}
 	fmt.Printf("todo id %s completed. use './todo list' to show\n", id)
+}
+
+func DeleteTodo(id string) {
+	c := getClient()
+	defer c.Close()
+
+	exists, err := c.SIsMember(todoIDsSet, "todo:"+id).Result()
+	if err != nil {
+		log.Fatalf("todo does not %s exists %v", id, err)
+	}
+
+	if !exists {
+		log.Fatalf("todo with id %s does not exist\n", id)
+	}
+	completedTodo := map[string]interface{}{}
+	completedTodo["tags"] = "deleted"
+
+	err = c.HMSet("todo:"+id, completedTodo).Err()
+	if err != nil {
+		log.Fatal("failed to delete todo id", id)
+	}
+	fmt.Printf("todo id %s deleted. use './todo list' to show\n", id)
 }
 
 // Todo struct type

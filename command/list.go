@@ -16,13 +16,15 @@ func init() {
 }
 
 func ListTodo(cmd *cobra.Command, args []string) {
-	status := cmd.Flag("tags").Value.String()
+	tags := cmd.Flag("tags").Value.String()
 
 	var todos []datastore.Todo
-	if status == "completed" || status == "pending" || status == "in-progress" || status == "" {
-		todos = datastore.ListTodos(status)
+	if tags == "completed" || tags == "active" || tags == "" {
+		todos = datastore.ListTodos(tags)
+	} else if tags == "deleted" {
+		log.Fatalf("todos marked deleted are saved in memory but won't be shown anywhere :)")
 	} else {
-		log.Fatalf("provide valid status - completed, pending or in-progress")
+		log.Fatalf("provide valid tags - active, completed, or deleted")
 	}
 
 	todoTable := [][]string{}
