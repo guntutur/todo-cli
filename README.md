@@ -1,5 +1,8 @@
 ## Todo Cli Apps Build using golang and redis
 
+go version go1.12.9 darwin/amd64
+Redis server v=5.0.5 sha=00000000:0 malloc=libc bits=64 build=31cd6e21ec924b46
+
 ### Run Locally
 This assume you have redis installed and exposed on its default `6379` port<br>
 run command `go buid -o todo` in root dir<br/>
