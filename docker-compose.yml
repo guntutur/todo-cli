@@ -1,0 +1,19 @@
+version: "2"
+services:
+  app:
+    container_name: todos_guntur_cli
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    links:
+      - redis
+    environment:
+      REDIS_HOST: redis:6379
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
