@@ -73,7 +73,7 @@ func getClient() *redis.Client {
 	return c
 }
 
-func ListTodos(tags string) []Todo {
+func ListTodos(tags string) []TodoRedis {
 	c := getClient()
 	defer c.Close()
 
@@ -82,7 +82,7 @@ func ListTodos(tags string) []Todo {
 		log.Fatal("failed to get todo IDs", err)
 	}
 
-	todos := []Todo{}
+	todos := []TodoRedis{}
 	for _, todoHashName := range todoHashNames {
 		id := strings.Split(todoHashName, ":")[1]
 
@@ -92,13 +92,13 @@ func ListTodos(tags string) []Todo {
 		}
 
 		if todoMap["tags"] != "deleted" {
-			var todo Todo
+			var todo TodoRedis
 			if tags == "" {
-				todo = Todo{id, todoMap["created"], todoMap["task_content"], todoMap["tags"]}
+				todo = TodoRedis{id, todoMap["created"], todoMap["task_content"], todoMap["tags"]}
 				todos = append(todos, todo)
 			} else {
 				if tags == todoMap["tags"] {
-					todo = Todo{id, todoMap["created"], todoMap["task_content"], todoMap["tags"]}
+					todo = TodoRedis{id, todoMap["created"], todoMap["task_content"], todoMap["tags"]}
 					todos = append(todos, todo)
 				}
 			}
@@ -182,8 +182,8 @@ func DeleteTodo(id string) {
 	fmt.Printf("todo id %s deleted. use './todo list' to show\n", id)
 }
 
-// Todo struct type
-type Todo struct {
+// TodoRedis struct type
+type TodoRedis struct {
 	ID          string
 	Created     string
 	TaskContent string

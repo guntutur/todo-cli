@@ -18,9 +18,11 @@ func init() {
 func ListTodo(cmd *cobra.Command, args []string) {
 	tags := cmd.Flag("tags").Value.String()
 
-	var todos []datastore.Todo
+	//var todos []datastore.TodoRedis
+	var todos []datastore.TodoCDBObj
 	if tags == "completed" || tags == "active" || tags == "" {
-		todos = datastore.ListTodos(tags)
+		//todos = datastore.ListTodos(tags)
+		todos = datastore.ListTodosCDB(tags)
 	} else if tags == "deleted" {
 		log.Fatalf("todos marked deleted are saved in memory but won't be shown anywhere :)")
 	} else {
@@ -30,7 +32,7 @@ func ListTodo(cmd *cobra.Command, args []string) {
 	todoTable := [][]string{}
 
 	for _, todo := range todos {
-		todoTable = append(todoTable, []string{todo.ID, todo.TaskContent, todo.Tags, todo.Created})
+		todoTable = append(todoTable, []string{todo.ID, todo.Todo.TaskContent, todo.Todo.Tags, todo.Todo.Created})
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)

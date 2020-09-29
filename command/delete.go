@@ -15,5 +15,6 @@ func init() {
 
 func DeleteTodo(cmd *cobra.Command, args []string) {
 	id := cmd.Flag("id").Value.String()
-	datastore.DeleteTodo(id)
+	//datastore.DeleteTodo(id)
+	datastore.DeleteTodoCDB(id)
 }

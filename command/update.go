@@ -15,5 +15,6 @@ func init() {
 
 func CompleteTodo(cmd *cobra.Command, args []string) {
 	id := cmd.Flag("id").Value.String()
-	datastore.CompleteTodo(id)
+	//datastore.CompleteTodo(id)
+	datastore.CompleteTodoCDB(id)
 }

@@ -17,5 +17,6 @@ func init() {
 func CreateTodo(cmd *cobra.Command, args []string) {
 	taskContent := cmd.Flag("task_content").Value.String()
 	fmt.Println("created todo : " + taskContent)
-	datastore.CreateTodo(taskContent)
+	//datastore.CreateTodo(taskContent)
+	datastore.CreateTodoCDB(taskContent)
 }
