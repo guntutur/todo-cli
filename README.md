@@ -14,7 +14,7 @@ for detail and explanation of feature, please use command below
 which would output something like this
 
 ````
-Starting todo apps
+Starting todo apps, using default DB : <db_name>
 
 Usage:
   todo [command]
@@ -33,6 +33,7 @@ Flags:
 Use "todo [command] --help" for more information about a command.
 ````
 
+to change <db_name>, go to command/datastore/couchdb.go at line 52
 the built in functionality of cli apps are made possible with help of [github.com/spf13/cobra](https://github.com/spf13/cobra)
 
 ### create task
@@ -52,7 +53,19 @@ currently there is only `active`, `completed`, and `deleted` tags known
 deleted tags won't shown in list, but are kept in memory datastore
 `./todo delete --id "task_id_integer"`
 
-## Run with docker
+## RUn Cli Apps with docker
+````
+docker build -t todos_guntur_cli:dev .
+````
+
+then run
+````
+docker run -it todos_guntur_cli:dev sh
+````
+to sh into docker image, we will automatically entering /app where our todo binary resided, from there, basic curds operation can be done
+
+
+## Run Cli Apps and redis with docker
 
 To integrate our apps with redis container, run below command
 ````

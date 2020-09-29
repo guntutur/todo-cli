@@ -9,4 +9,4 @@ RUN go mod download
 RUN go mod verify
 RUN go build -o todo .
 
-#CMD ["/app/todo"]
+CMD ["./todo"]
