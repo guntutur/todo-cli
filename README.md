@@ -4,6 +4,7 @@ go version go1.12.9 darwin/amd64
 Redis server v=5.0.5 sha=00000000:0 malloc=libc bits=64 build=31cd6e21ec924b46
 
 ### Run Locally
+Please set corresponding value inside `setenv.sh` first before running or building the go binary<br/>
 This assume you have redis installed and exposed on its default `6379` port<br>
 run command `go buid -o todo` in root dir<br/>
 which will build binary executable called in root `todo`.
