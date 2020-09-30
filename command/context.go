@@ -1,7 +1,6 @@
 package command
 
 import (
-	"github.com/guntutur/todo-cli/datastore"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -10,7 +9,7 @@ import (
 var ContextCommand = &cobra.Command{}
 
 func init() {
-	ContextCommand = &cobra.Command{Use: "todo", Short: "Starting todo apps, using default DB : " + datastore.DbName, Version: "0.0.1"}
+	ContextCommand = &cobra.Command{Use: "todo", Short: "Starting todo apps", Version: "0.0.1"}
 }
 
 // Execute is the entry point

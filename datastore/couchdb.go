@@ -1,18 +1,34 @@
 package datastore
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"crypto/rand"
 	"fmt"
 	_ "github.com/go-kivik/couchdb"
 	"github.com/go-kivik/kivik"
 	"log"
+	"os"
+	"os/exec"
+	"path"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
 
-var couchDBHost string
-var DbName string
+var couchDbUser string
+var couchDbPwd string
+var couchDbHost string
+var couchDbPort string
+var couchDbName string
+
+const CouchDbUser = "COUCHDB_USER"
+const CouchDbPwd = "COUCHDB_PWD"
+const CouchDbHost = "COUCHDB_HOST"
+const CouchDbPort = "COUCHDB_PORT"
+const CouchDbName = "COUCHDB_NAME"
 
 type TodoCDB struct {
 	Key         int64  `json:"key"`
@@ -34,6 +50,75 @@ type DeletedBy struct {
 	Email string `json:"email"`
 }
 
+func constructCouchDbHost(user string, pwd string, host string, port string) string {
+	return fmt.Sprintf("http://%s:%s@%s:%s", user, pwd, host, port)
+}
+
+// need a better way to set env variable from this point
+// as this process is likely setting everything up every time each cruds command commence
+// but at least it is working
+func init() {
+
+	_, userPresent := os.LookupEnv(CouchDbUser)
+	_, pwdPresent := os.LookupEnv(CouchDbPwd)
+	_, hostPresent := os.LookupEnv(CouchDbHost)
+	_, portPresent := os.LookupEnv(CouchDbPort)
+	_, dbNamePresent := os.LookupEnv(CouchDbName)
+
+	if !userPresent && !pwdPresent && !hostPresent && !portPresent && !dbNamePresent {
+		_, b, _, _ := runtime.Caller(0)
+		d := path.Join(path.Dir(b))
+		file := filepath.Dir(d) + "/setenv.sh"
+		cmd := exec.Command("/bin/sh", "-c", "source "+file+" ; echo '<<<ENVIRONMENT>>>' ; env")
+		bs, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Fatalln(err)
+		}
+		s := bufio.NewScanner(bytes.NewReader(bs))
+		start := false
+		for s.Scan() {
+			if s.Text() == "<<<ENVIRONMENT>>>" {
+				start = true
+			} else if start {
+				kv := strings.SplitN(s.Text(), "=", 2)
+				if len(kv) == 2 {
+					os.Setenv(kv[0], kv[1])
+				}
+			}
+		}
+		initEnvVar()
+	}
+}
+
+func initEnvVar() {
+	couchDbUser = os.Getenv(CouchDbUser)
+	if couchDbUser == "" {
+		log.Fatalf("%s env var is not set", CouchDbUser)
+	}
+
+	couchDbPwd = os.Getenv(CouchDbPwd)
+	if couchDbPwd == "" {
+		log.Fatalf("%s env var is not set", CouchDbPort)
+	}
+
+	couchDbHost = os.Getenv(CouchDbHost)
+	if couchDbHost == "" {
+		log.Fatalf("%s env var is not set", CouchDbHost)
+	}
+
+	couchDbPort = os.Getenv(CouchDbPort)
+	if couchDbPort == "" {
+		log.Fatalf("%s env var is not set", CouchDbPort)
+	}
+
+	couchDbName = os.Getenv(CouchDbName)
+	if couchDbName == "" {
+		log.Fatalf("%s env var is not set", CouchDbName)
+	}
+
+	couchDbHost = constructCouchDbHost(couchDbUser, couchDbPwd, couchDbHost, couchDbPort)
+}
+
 func createId() (uuid string) {
 
 	b := make([]byte, 16)
@@ -47,27 +132,22 @@ func createId() (uuid string) {
 	return strings.ToLower(uuid)
 }
 
-func init() {
-	DbName = "todos_guntutur"
-	couchDBHost = "http://admin:iniadmin@13.250.43.79:5984"
-}
-
 func dialCouchDBClient() *kivik.DB {
-	client, err := kivik.New("couch", couchDBHost)
+	client, err := kivik.New("couch", couchDbHost)
 	if err != nil {
 		log.Fatal("couchdb connect remote endpoint failed", err)
 	}
 
-	e, err := client.DBExists(context.TODO(), DbName)
+	e, err := client.DBExists(context.TODO(), couchDbName)
 	if !e {
-		log.Printf("Default db %s not exists, creating..", DbName)
-		err = client.CreateDB(context.TODO(), DbName)
+		log.Printf("Default db %s not exists, creating..", couchDbName)
+		err = client.CreateDB(context.TODO(), couchDbName)
 		if err != nil {
 			log.Fatalf("couchdb create db failed : %s", err)
 		}
 	}
 
-	return client.DB(context.TODO(), DbName)
+	return client.DB(context.TODO(), couchDbName)
 }
 
 func ListTodosCDB(tags string) []TodoCDBObj {
@@ -91,7 +171,9 @@ func ListTodosCDB(tags string) []TodoCDBObj {
 			}
 		} else {
 			if tags == todoCdbObj.Todo.Tags {
-				todos = append(todos, todoCdbObj)
+				if todoCdbObj.DeletedAt == "" {
+					todos = append(todos, todoCdbObj)
+				}
 			}
 		}
 	}
@@ -156,7 +238,7 @@ func DeleteTodoCDB(id string) {
 	}
 
 	todoCdbObj.DeletedAt = time.Now().String()
-	tmpId := strings.Split(DbName, "_")[1]
+	tmpId := strings.Split(couchDbName, "_")[1]
 	todoCdbObj.DeletedBy = DeletedBy{
 		ID:    tmpId,
 		Email: tmpId + "@gmail.com",
