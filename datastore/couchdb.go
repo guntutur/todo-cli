@@ -32,11 +32,11 @@ type TodoCDB struct {
 }
 
 type TodoCDBObj struct {
-	ID        string    `json:"_id"`
-	Rev       string    `json:"_rev,omitempty"`
-	Todo      TodoCDB   `json:"todo"`
-	DeletedAt string    `json:"deletedAt"`
-	DeletedBy DeletedBy `json:"deletedBy"`
+	ID        string     `json:"_id"`
+	Rev       string     `json:"_rev,omitempty"`
+	Todo      TodoCDB    `json:"todo"`
+	DeletedAt *string    `json:"deletedAt"`
+	DeletedBy *DeletedBy `json:"deletedBy"`
 }
 
 type DeletedBy struct {
@@ -124,12 +124,12 @@ func ListTodosCDB(tags string) []TodoCDBObj {
 		}
 
 		if tags == "" {
-			if todoCdbObj.DeletedAt == "" {
+			if todoCdbObj.DeletedAt == nil {
 				todos = append(todos, todoCdbObj)
 			}
 		} else {
 			if tags == todoCdbObj.Todo.Tags {
-				if todoCdbObj.DeletedAt == "" {
+				if todoCdbObj.DeletedAt == nil {
 					todos = append(todos, todoCdbObj)
 				}
 			}
@@ -195,9 +195,10 @@ func DeleteTodoCDB(id string) {
 		log.Println("Todo not found")
 	}
 
-	todoCdbObj.DeletedAt = time.Now().String()
+	t := time.Now().String()
+	todoCdbObj.DeletedAt = &t
 	tmpId := strings.Split(couchDbName, "_")[1]
-	todoCdbObj.DeletedBy = DeletedBy{
+	todoCdbObj.DeletedBy = &DeletedBy{
 		ID:    tmpId,
 		Email: tmpId + "@gmail.com",
 	}
