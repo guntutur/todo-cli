@@ -1,8 +1,6 @@
 package datastore
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"crypto/rand"
 	"fmt"
@@ -10,10 +8,6 @@ import (
 	"github.com/go-kivik/kivik"
 	"log"
 	"os"
-	"os/exec"
-	"path"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 )
@@ -54,43 +48,7 @@ func constructCouchDbHost(user string, pwd string, host string, port string) str
 	return fmt.Sprintf("http://%s:%s@%s:%s", user, pwd, host, port)
 }
 
-// need a better way to set env variable from this point
-// as this process is likely setting everything up every time each cruds command commence
-// but at least it is working
 func init() {
-
-	_, userPresent := os.LookupEnv(CouchDbUser)
-	_, pwdPresent := os.LookupEnv(CouchDbPwd)
-	_, hostPresent := os.LookupEnv(CouchDbHost)
-	_, portPresent := os.LookupEnv(CouchDbPort)
-	_, dbNamePresent := os.LookupEnv(CouchDbName)
-
-	if !userPresent && !pwdPresent && !hostPresent && !portPresent && !dbNamePresent {
-		_, b, _, _ := runtime.Caller(0)
-		d := path.Join(path.Dir(b))
-		file := filepath.Dir(d) + "/setenv.sh"
-		cmd := exec.Command("/bin/sh", "-c", "source "+file+" ; echo '<<<ENVIRONMENT>>>' ; env")
-		bs, err := cmd.CombinedOutput()
-		if err != nil {
-			log.Fatalln(err)
-		}
-		s := bufio.NewScanner(bytes.NewReader(bs))
-		start := false
-		for s.Scan() {
-			if s.Text() == "<<<ENVIRONMENT>>>" {
-				start = true
-			} else if start {
-				kv := strings.SplitN(s.Text(), "=", 2)
-				if len(kv) == 2 {
-					os.Setenv(kv[0], kv[1])
-				}
-			}
-		}
-		initEnvVar()
-	}
-}
-
-func initEnvVar() {
 	couchDbUser = os.Getenv(CouchDbUser)
 	if couchDbUser == "" {
 		log.Fatalf("%s env var is not set", CouchDbUser)
@@ -98,7 +56,7 @@ func initEnvVar() {
 
 	couchDbPwd = os.Getenv(CouchDbPwd)
 	if couchDbPwd == "" {
-		log.Fatalf("%s env var is not set", CouchDbPort)
+		log.Fatalf("%s env var is not set", CouchDbPwd)
 	}
 
 	couchDbHost = os.Getenv(CouchDbHost)
