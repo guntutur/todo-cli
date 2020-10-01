@@ -8,5 +8,4 @@ ADD . /app
 RUN go mod download
 RUN go mod verify
 RUN go build -o todo .
-
-CMD ["./todo"]
+ENTRYPOINT ["/app/envwrapper.sh"]
